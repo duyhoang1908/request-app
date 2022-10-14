@@ -1,27 +1,16 @@
-import {
-  Breadcrumb,
-  Button,
-  Col,
-  Form,
-  Input,
-  Row,
-  Select,
-  Tag,
-  Tooltip,
-  Typography,
-} from "antd";
+import { Button, Form, Select, Tag, Typography } from "antd";
 import { Content } from "antd/lib/layout/layout";
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+
 import BreadCrumb from "../components/Common/BreadCrumb";
-import SideBar from "../components/SideBar/SideBar";
-import { SearchOutlined } from "@ant-design/icons";
+
 import TextArea from "antd/lib/input/TextArea";
-import { async } from "@firebase/util";
+
 import { addNewRequest } from "../firebase/services";
 import { toast } from "react-toastify";
-import { useForm } from "antd/es/form/Form";
-import { requestSchema } from "../schema";
+import { useSelector } from "react-redux";
+import { userSelector } from "../store/selector";
+import { auth } from "../firebase/config";
 
 const Request = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,20 +18,27 @@ const Request = () => {
   const [category, setCategory] = useState("Đồ vật");
   const [department, setDepartment] = useState("IT");
   const [priority, setPriority] = useState("Low");
+  const user = useSelector(userSelector)
 
   const handleSendRequest = async () => {
+    
     setIsLoading(true);
     if (content.trim()) {
       const data = {
+        author:user.name,
+        email: user.email,
+        uid: user.uid,
         department,
         category,
         priority,
         content: content.trim(),
+        isConfirm: false
       };
+      console.log(data)
       try {
         await addNewRequest(data);
         toast("Gửi yêu cầu thành công!");
-        setContent("")
+        setContent("");
         setIsLoading(false);
       } catch (error) {
         toast("Gửi yêu cầu thất bại!");
@@ -59,7 +55,9 @@ const Request = () => {
       style={{ padding: "15px", backgroundColor: "#EFF2F5", height: "100%" }}
     >
       <Content>
-        <BreadCrumb />
+        <div style={{ marginBottom: "15px" }}>
+          <BreadCrumb value="Yêu cầu" />
+        </div>
         <Typography.Title>Yêu cầu</Typography.Title>
         <div style={{ backgroundColor: "#ffffff", padding: "25px" }}>
           <Content>
