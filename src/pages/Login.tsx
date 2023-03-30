@@ -23,7 +23,7 @@ const Login = () => {
           loginForm.password
         );
         localStorage.setItem("userID", JSON.stringify(auth?.currentUser?.uid));
-        navigate("/request");
+        navigate("/");
       } catch (error) {
         toast("Đăng nhập thất bại!");
       }

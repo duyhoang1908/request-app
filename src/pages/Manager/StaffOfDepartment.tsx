@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
 import { User } from "../../types";
@@ -8,22 +10,15 @@ import { getUserOfDepartment } from "../../utils/connectFirebase";
 const StaffOfDepartment = () => {
   const { department } = useParams();
 
-  const [list, setList] = useState<User[] | any[]>();
+  const { data } = useQuery({
+    queryKey: [`staff${department}`, department],
+    queryFn: () => getUserOfDepartment(department as string),
+    enabled: department !== undefined,
+    onError: () => {
+      toast("Đã có lỗi xảy ra.");
+    },
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getUserOfDepartment(department as string);
-        setList(data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    fetchData();
-  }, [department]);
-
-  console.log(list);
   return (
     <MainLayout>
       <Title
@@ -51,7 +46,7 @@ const StaffOfDepartment = () => {
             </tr>
           </thead>
           <tbody>
-            {list?.map((user) => (
+            {data?.map((user) => (
               <TableRow key={user.id} user={user} />
             ))}
           </tbody>

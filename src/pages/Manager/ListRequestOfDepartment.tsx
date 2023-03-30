@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -16,19 +17,10 @@ const ListRequestOfDepartment = () => {
   const user = useSelector(userSelector);
   const { department } = useParams();
 
-  const [list, setList] = useState<Request[] | any[]>();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getRequestsByRole(department as string);
-        setList(data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-  }, [department]);
+  const { data } = useQuery({
+    queryKey: [`request${department}`, department],
+    queryFn: () => getRequestsByRole(department as string),
+  });
 
   return (
     <MainLayout>
@@ -81,9 +73,11 @@ const ListRequestOfDepartment = () => {
             </tr>
           </thead>
           <tbody>
-            {list?.map((request) => (
-              <TableRow key={request.id} request={request} />
-            ))}
+            {data
+              ?.sort((a: Request, b: Request) => b.createAt - a.createAt)
+              .map((request) => (
+                <TableRow key={request.id} request={request} />
+              ))}
           </tbody>
         </table>
       </div>
@@ -112,6 +106,12 @@ const TableRow = ({ request }: Props) => {
       toast("Đã có lỗi xảy ra!");
     }
   };
+
+  // const changeConfirm = useMutation({
+  //  mutationFn: (body) => {
+  //   return body
+  //  }
+  // });
   return (
     <tr className="bg-white border-b">
       <th

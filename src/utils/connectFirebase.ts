@@ -127,7 +127,7 @@ export const handleChangeConfirmRequest = async (id: string) => {
   });
 };
 
-export const updateRequest = async (id: string, data: Omit<Request, "id">) => {
+export const updateRequest = async (id: string, data: Request) => {
   const requestRef = doc(db, "Request", id);
   await updateDoc(requestRef, data);
 };

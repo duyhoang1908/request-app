@@ -1,31 +1,26 @@
-import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
 import { userSelector } from "../../redux/Slice/UserSlice";
-import { Request } from "../../types";
 import { getMyRequest } from "../../utils/connectFirebase";
 import { converTimeStamp } from "../../utils/func";
 
-const MyRequest = () => {
-  const [listRequest, setListRequest] = useState<[] | Request[]>([]);
+import { useQuery } from "@tanstack/react-query";
+import { Request } from "../../types";
 
+const MyRequest = () => {
   const user = useSelector(userSelector);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getMyRequest(user.uid);
-        data.sort((a, b) => b.createAt - a.createAt);
-        setListRequest(data);
-      } catch (error) {
-        console.log(error);
-        toast("Đã có lỗi xảy ra.");
-      }
-    };
-    fetchData();
-  }, [user.uid]);
+  const { data } = useQuery({
+    queryKey: ["requests", user.uid],
+    queryFn: (_) => getMyRequest(user.uid),
+    onError: () => {
+      toast("Đã có lỗi xảy ra.");
+    },
+    enabled: user.uid !== undefined,
+  });
+
   return (
     <MainLayout>
       <Title name="Yêu cầu của tôi" title="Danh sách yêu cầu" />
@@ -74,47 +69,49 @@ const MyRequest = () => {
             </tr>
           </thead>
           <tbody>
-            {listRequest.map((request) => (
-              <tr key={request.id} className="bg-white border-b">
-                <th
-                  scope="row"
-                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
-                >
-                  {request.author}
-                </th>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {request.department}
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {request.category}
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {request.content}
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  <div
-                    className={`px-2 py-1 text-center text-white text-xs rounded-md ${
-                      request.priority === "Low"
-                        ? "bg-gray-500"
-                        : request.priority === "Medium"
-                        ? "bg-blue-600"
-                        : "bg-red-500"
-                    }`}
+            {data
+              ?.sort((a: Request, b: Request) => b.createAt - a.createAt)
+              .map((request) => (
+                <tr key={request.id} className="bg-white border-b">
+                  <th
+                    scope="row"
+                    className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {request.priority}
-                  </div>
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {request.isConfirm ? "Đã xác nhận" : "Chưa xác nhận"}
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {converTimeStamp(request.createAt)}
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  <Link to={`/update/${request.requestID}`}>Sửa</Link>
-                </td>
-              </tr>
-            ))}
+                    {request.author}
+                  </th>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    {request.department}
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    {request.category}
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    {request.content}
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    <div
+                      className={`px-2 py-1 text-center text-white text-xs rounded-md ${
+                        request.priority === "Low"
+                          ? "bg-gray-500"
+                          : request.priority === "Medium"
+                          ? "bg-blue-600"
+                          : "bg-red-500"
+                      }`}
+                    >
+                      {request.priority}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    {request.isConfirm ? "Đã xác nhận" : "Chưa xác nhận"}
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    {converTimeStamp(request.createAt)}
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    <Link to={`/request/${request.requestID}`}>Sửa</Link>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

@@ -5,8 +5,8 @@ import { userSelector } from "../../redux/Slice/UserSlice";
 
 const Home = () => {
   const navigate = useNavigate();
-
   const user = useSelector(userSelector);
+  console.log(user);
 
   useEffect(() => {
     switch (user.role) {
@@ -17,7 +17,7 @@ const Home = () => {
         navigate(`/list/${user.department}`);
         break;
       default:
-        navigate("/request");
+        navigate("/request/add");
     }
   }, [user.role]);
 

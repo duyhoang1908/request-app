@@ -39,7 +39,7 @@ const ControlBar = ({ isShowBar, setIsShowBar }: Props) => {
         }`}
       >
         <NavLink
-          to="/request"
+          to="/request/add"
           className={({ isActive }) =>
             `block px-2 py-1 hover:text-black hover:bg-gray-100 hover:border-r-4 border-blue-600 hover:cursor-pointer duration-75 ${
               isActive ? "text-black bg-gray-100 border-r-4" : "text-white"

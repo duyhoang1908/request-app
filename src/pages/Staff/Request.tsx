@@ -3,24 +3,48 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { userSelector } from "../../redux/Slice/UserSlice";
-import { addNewRequest } from "../../utils/connectFirebase";
-
+import {
+  addNewRequest,
+  getRequestById,
+  updateRequest as handleUpdateRequest,
+} from "../../utils/connectFirebase";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMatch, useNavigate, useParams } from "react-router-dom";
+import { Request as RequestType } from "../../types";
 
-const initFormRequest = {
+type FormType =
+  | Pick<RequestType, "content" | "priority" | "department" | "category" | "id">
+  | RequestType;
+
+const initFormRequest: FormType = {
   content: "",
   priority: "Low",
   department: "IT",
   category: "Đồ vật",
+  id: "",
 };
 
 const Request = () => {
-  const [requestForm, setRequestForm] = useState(initFormRequest);
+  const [requestForm, setRequestForm] = useState<FormType>(initFormRequest);
   const user = useSelector(userSelector);
+  const navigate = useNavigate();
+  const { id } = useParams();
 
-  const handleSendRequest = async () => {
-    if (requestForm.content.trim()) {
+  const isAddMode = Boolean(useMatch("/request/add"));
+
+  useQuery({
+    queryKey: ["request", id],
+    queryFn: (_) => getRequestById(id as string),
+    enabled: id !== undefined && !isAddMode,
+    onSuccess: (data) => {
+      setRequestForm(data);
+    },
+  });
+
+  const handleSendRequest = useMutation({
+    mutationFn: (_) => {
       const data = {
         author: user.name,
         email: user.email,
@@ -33,21 +57,39 @@ const Request = () => {
         requestID: nanoid(),
         createAt: Date.now(),
       };
-      try {
-        await addNewRequest(data);
-        toast("Gửi yêu cầu thành công!");
-      } catch (error) {
-        toast("Gửi yêu cầu thất bại!");
-      }
-    } else {
-      toast("Vui lòng điền đầy đủ thông tin!");
-    }
-  };
+      return addNewRequest(data);
+    },
+  });
+
+  const updateRequest = useMutation({
+    mutationFn: (_) => {
+      return handleUpdateRequest(requestForm.id, requestForm as RequestType);
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleSendRequest();
-    setRequestForm(initFormRequest);
+    if (isAddMode) {
+      handleSendRequest.mutate(undefined, {
+        onError: () => {
+          toast("Gửi yêu cầu thất bại!");
+        },
+        onSuccess: () => {
+          setRequestForm(initFormRequest);
+          toast("Gửi yêu cầu thành công!");
+        },
+      });
+    } else {
+      updateRequest.mutate(undefined, {
+        onSuccess: () => {
+          toast("Gửi yêu cầu thành công!");
+          navigate("/myrequest");
+        },
+        onError: () => {
+          toast("Đã có lỗi xảy ra");
+        },
+      });
+    }
   };
 
   const handleChange =
@@ -62,7 +104,7 @@ const Request = () => {
 
   return (
     <MainLayout>
-      <Title name="yêu cầu" title="Tạo yêu cầu" />
+      <Title name="yêu cầu" title={isAddMode ? "Tạo yêu cầu" : "Sửa yêu cầu"} />
       <form
         onSubmit={(e) => handleSubmit(e)}
         className="mt-10 flex flex-col gap-5"

@@ -3,9 +3,9 @@ import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { userSlice } from "./redux/Slice/UserSlice";
 import { getUserByUid } from "./utils/connectFirebase";
-import { User } from "./types";
+
 import { managerRouter, staffRouter } from "./routers";
-import Request from "./pages/Staff/Request";
+
 import Login from "./pages/Login";
 import { ToastContainer } from "react-toastify";
 
@@ -57,7 +57,6 @@ const CheckRoute = ({ role }: Props) => {
   useEffect(() => {
     const fetchData = async (uid: string) => {
       const userData = await getUserByUid(uid);
-      console.log(userData);
       if (userData.role !== role) {
         navigate("/");
       }
