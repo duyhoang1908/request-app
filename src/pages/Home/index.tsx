@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { userSelector } from "../../redux/Slice/UserSlice";
@@ -6,7 +6,6 @@ import { userSelector } from "../../redux/Slice/UserSlice";
 const Home = () => {
   const navigate = useNavigate();
   const user = useSelector(userSelector);
-  console.log(user);
 
   useEffect(() => {
     switch (user.role) {
