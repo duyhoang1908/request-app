@@ -1,8 +1,10 @@
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { auth } from "../firebase/config";
+import { useMutation } from "@tanstack/react-query";
+import { loginUser } from "../apis/request.api";
+import JWTManager from "../utils/jwt";
+import { useAuthContext } from "../context/AuthContext";
 
 const initLoginForm = {
   email: "",
@@ -11,31 +13,27 @@ const initLoginForm = {
 
 const Login = () => {
   const navigate = useNavigate();
-
   const [loginForm, setLoginForm] = useState(initLoginForm);
+  const { setUser } = useAuthContext();
 
-  const handleLogin = async () => {
-    if (loginForm.email.trim() && loginForm.password.trim()) {
-      try {
-        await signInWithEmailAndPassword(
-          auth,
-          loginForm.email,
-          loginForm.password
-        );
-        localStorage.setItem("userID", JSON.stringify(auth?.currentUser?.uid));
+  const handleLogin = useMutation({
+    mutationFn: () => {
+      return loginUser(loginForm);
+    },
+    onSuccess: (res) => {
+      if (res.data) {
+        setUser(res.data.data);
+        JWTManager.setToken(res.data.accessToken);
         navigate("/");
-      } catch (error) {
-        toast("Đăng nhập thất bại!");
+      } else {
+        toast("Đăng nhập thất bại.");
       }
-    } else {
-      toast("Vui lòng nhập đủ thông tin!");
-    }
-  };
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleLogin();
-    setLoginForm(initLoginForm);
+    handleLogin.mutate();
   };
 
   const handleChange =

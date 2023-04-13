@@ -1,8 +1,7 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { NavLink, useNavigate } from "react-router-dom";
-import { userSelector, userSlice } from "../../redux/Slice/UserSlice";
-
 import { FaBars, FaAngleLeft } from "react-icons/fa";
+import { useAuthContext } from "../../context/AuthContext";
 
 type Props = {
   isShowBar: boolean;
@@ -10,14 +9,15 @@ type Props = {
 };
 
 const ControlBar = ({ isShowBar, setIsShowBar }: Props) => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const user = useSelector(userSelector);
+  const { clearToken, setUser } = useAuthContext();
+
+  const { user } = useAuthContext();
 
   const handleLogOut = () => {
-    localStorage.removeItem("userID");
-    dispatch(userSlice.actions.setUser({}));
+    clearToken();
+    setUser(null);
     navigate("/login");
   };
 
@@ -59,28 +59,28 @@ const ControlBar = ({ isShowBar, setIsShowBar }: Props) => {
           Yêu cầu của tôi
         </NavLink>
 
-        {user.role === "manager" && (
+        {user?.role === "manager" && (
           <>
             <NavLink
-              to={`/list/${user.department}`}
+              to={`/list/${user?.department}`}
               className={({ isActive }) =>
                 `block px-2 py-1 hover:text-black hover:bg-gray-100 hover:border-r-4 border-blue-600 hover:cursor-pointer duration-75 ${
                   isActive ? "text-black bg-gray-100 border-r-4" : "text-white"
                 }`
               }
             >
-              {`Yêu cầu phòng ${user.department}`}
+              {`Yêu cầu phòng ${user?.department}`}
             </NavLink>
 
             <NavLink
-              to={`/staff/${user.department}`}
+              to={`/staff/${user?.department}`}
               className={({ isActive }) =>
                 `block px-2 py-1 hover:text-black hover:bg-gray-100 hover:border-r-4 border-blue-600 hover:cursor-pointer duration-75 ${
                   isActive ? "text-black bg-gray-100 border-r-4" : "text-white"
                 }`
               }
             >
-              {`Nhân viên phòng ${user.department}`}
+              {`Nhân viên phòng ${user?.department}`}
             </NavLink>
           </>
         )}

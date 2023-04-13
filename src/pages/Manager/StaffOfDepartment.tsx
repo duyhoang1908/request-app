@@ -1,18 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
 import { User } from "../../types";
-import { getUserOfDepartment } from "../../utils/connectFirebase";
+
+import { getStaffOfDepartment } from "../../apis/request.api";
 
 const StaffOfDepartment = () => {
   const { department } = useParams();
 
   const { data } = useQuery({
     queryKey: [`staff${department}`, department],
-    queryFn: () => getUserOfDepartment(department as string),
+    queryFn: () => getStaffOfDepartment(department as string),
     enabled: department !== undefined,
     onError: () => {
       toast("Đã có lỗi xảy ra.");
@@ -46,8 +46,8 @@ const StaffOfDepartment = () => {
             </tr>
           </thead>
           <tbody>
-            {data?.map((user) => (
-              <TableRow key={user.id} user={user} />
+            {data?.data.map((user) => (
+              <TableRow key={user._id} user={user} />
             ))}
           </tbody>
         </table>
@@ -58,18 +58,14 @@ const StaffOfDepartment = () => {
 
 export default StaffOfDepartment;
 
-type Props = {
-  user: User;
-};
-
-const TableRow = ({ user }: Props) => {
+const TableRow = ({ user }: { user: User }) => {
   return (
     <tr className="bg-white border-b">
       <th
         scope="row"
         className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
       >
-        {user.name}
+        {user.username}
       </th>
       <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
         {user.email}

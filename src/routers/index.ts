@@ -20,7 +20,6 @@ export const staffRouter = [
 ];
 
 export const managerRouter = [
-  ...staffRouter,
   {
     component: ListRequestOfDepartment,
     path: "/list/:department",

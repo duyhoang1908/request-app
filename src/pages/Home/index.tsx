@@ -1,26 +1,30 @@
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { userSelector } from "../../redux/Slice/UserSlice";
+import { useAuthContext } from "../../context/AuthContext";
+import loading from "../../assets/image/loading.gif";
 
 const Home = () => {
   const navigate = useNavigate();
-  const user = useSelector(userSelector);
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    switch (user.role) {
+    switch (user?.role) {
       case "staff":
         navigate("/myrequest");
         break;
       case "manager":
-        navigate(`/list/${user.department}`);
+        navigate(`/list/${user?.department}`);
         break;
       default:
         navigate("/request/add");
     }
-  }, [user.role]);
+  }, [user?.role]);
 
-  return <div>Home</div>;
+  return (
+    <div className="w-screen h-screen flex">
+      <img className="m-auto max-w-sm" src={loading} alt="" />
+    </div>
+  );
 };
 
 export default Home;

@@ -1,13 +1,9 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import ControlBar from "../components/ControlBar";
 
 import { FaBars, FaAngleLeft } from "react-icons/fa";
 
-type Props = {
-  children: any;
-};
-
-const MainLayout = ({ children }: Props) => {
+const MainLayout = ({ children }: { children: ReactNode }) => {
   const [isShowBar, setIsShowBar] = useState<boolean>(false);
   return (
     <div className="flex justify-between h-[100vh] relative">

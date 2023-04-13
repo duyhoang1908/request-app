@@ -1,21 +1,22 @@
-import { nanoid } from "@reduxjs/toolkit";
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { userSelector } from "../../redux/Slice/UserSlice";
-import {
-  addNewRequest,
-  getRequestById,
-  updateRequest as handleUpdateRequest,
-} from "../../utils/connectFirebase";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMatch, useNavigate, useParams } from "react-router-dom";
 import { Request as RequestType } from "../../types";
+import {
+  addNewRequest,
+  getRequestDetail,
+  updateRequest,
+} from "../../apis/request.api";
+import { useAuthContext } from "../../context/AuthContext";
 
 type FormType =
-  | Pick<RequestType, "content" | "priority" | "department" | "category" | "id">
+  | Pick<
+      RequestType,
+      "content" | "priority" | "department" | "category" | "_id"
+    >
   | RequestType;
 
 const initFormRequest: FormType = {
@@ -23,12 +24,14 @@ const initFormRequest: FormType = {
   priority: "Low",
   department: "IT",
   category: "Đồ vật",
-  id: "",
+  _id: "",
 };
 
 const Request = () => {
   const [requestForm, setRequestForm] = useState<FormType>(initFormRequest);
-  const user = useSelector(userSelector);
+
+  const { user } = useAuthContext();
+
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -36,34 +39,32 @@ const Request = () => {
 
   useQuery({
     queryKey: ["request", id],
-    queryFn: (_) => getRequestById(id as string),
+    queryFn: (_) => getRequestDetail(id as string),
     enabled: id !== undefined && !isAddMode,
     onSuccess: (data) => {
-      setRequestForm(data);
+      setRequestForm(data.data);
     },
   });
 
   const handleSendRequest = useMutation({
     mutationFn: (_) => {
       const data = {
-        author: user.name,
-        email: user.email,
-        uid: user.uid,
+        author: user?.username as string,
+        email: user?.email as string,
+        uid: user?._id as string,
         department: requestForm.department,
         category: requestForm.category,
         priority: requestForm.priority,
         content: requestForm.content.trim(),
         isConfirm: false,
-        requestID: nanoid(),
-        createAt: Date.now(),
       };
       return addNewRequest(data);
     },
   });
 
-  const updateRequest = useMutation({
+  const handleUpdateRequest = useMutation({
     mutationFn: (_) => {
-      return handleUpdateRequest(requestForm.id, requestForm as RequestType);
+      return updateRequest(requestForm);
     },
   });
 
@@ -80,7 +81,7 @@ const Request = () => {
         },
       });
     } else {
-      updateRequest.mutate(undefined, {
+      handleUpdateRequest.mutate(undefined, {
         onSuccess: () => {
           toast("Gửi yêu cầu thành công!");
           navigate("/myrequest");
@@ -154,7 +155,7 @@ const Request = () => {
           type="submit"
           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"
         >
-          Gửi
+          {isAddMode ? "Gửi" : "Sửa"}
         </button>
       </form>
     </MainLayout>

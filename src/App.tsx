@@ -1,31 +1,56 @@
 import { Routes, useNavigate, Outlet, Navigate, Route } from "react-router-dom";
-import { useDispatch } from "react-redux";
 import { useEffect } from "react";
-import { userSlice } from "./redux/Slice/UserSlice";
-import { getUserByUid } from "./utils/connectFirebase";
-
 import { managerRouter, staffRouter } from "./routers";
-
 import Login from "./pages/Login";
 import { ToastContainer } from "react-toastify";
+import Register from "./pages/Register";
+import { useAuthContext } from "./context/AuthContext";
+import JWTManager from "./utils/jwt";
+import jwtDecode from "jwt-decode";
+import { AccessToken } from "./types/token.type";
+import { getUserById } from "./apis/request.api";
 
 import "./App.css";
 import "react-toastify/dist/ReactToastify.css";
-import Register from "./pages/Register";
 
 function App() {
+  const navigate = useNavigate();
+  const { checkAuth, isAuthenticated, setUser, setIsAuthenticated } =
+    useAuthContext();
+
+  useEffect(() => {
+    const authenticate = async () => {
+      try {
+        //Kiem tra refesh token con han ? lay du lieu nguoi dung : dieu huong ve login
+        const success = await checkAuth();
+        if (success) {
+          setIsAuthenticated(true);
+          const { id } = jwtDecode<AccessToken>(
+            JWTManager.getToken() as string
+          );
+          const user = await getUserById(id);
+          setUser(user.data.data);
+        } else {
+          navigate("/login");
+        }
+      } catch (error) {
+        console.log("error", error);
+        navigate("/login");
+      }
+    };
+    authenticate();
+  }, []);
+
   return (
     <div className="App">
       <ToastContainer />
       <Routes>
-        <Route element={<CheckRoute role="staff" />}>
-          {staffRouter.map((route) => {
-            const Page = route.component;
-            return (
-              <Route path={route.path} key={route.path} element={<Page />} />
-            );
-          })}
-        </Route>
+        {staffRouter.map((route) => {
+          const Page = route.component;
+          return (
+            <Route path={route.path} key={route.path} element={<Page />} />
+          );
+        })}
 
         <Route element={<CheckRoute role="manager" />}>
           {managerRouter.map((route) => {
@@ -45,33 +70,12 @@ function App() {
 
 export default App;
 
-type Props = {
-  role: string;
-};
-
-const CheckRoute = ({ role }: Props) => {
-  const dispatch = useDispatch();
+const CheckRoute = ({ role }: { role: string }) => {
   const navigate = useNavigate();
-  const value = localStorage.getItem("userID");
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    const fetchData = async (uid: string) => {
-      const userData = await getUserByUid(uid);
-      if (userData.role !== role) {
-        navigate("/");
-      }
-      dispatch(userSlice.actions.setUser(userData));
-    };
-
-    if (typeof value === "string") {
-      const uid = JSON.parse(value);
-      fetchData(uid);
-    }
-  }, [value]);
-
-  return typeof value === "string" ? (
-    <Outlet />
-  ) : (
-    <Navigate to="/login" replace />
-  );
+    if (user?.role !== role) navigate("/");
+  }, [user, role]);
+  return <Outlet />;
 };

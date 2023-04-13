@@ -1,11 +1,16 @@
 export type User = {
-  createAt: number;
   department: string;
   email: string;
-  id: string;
-  name: string;
+  _id: string;
+  username: string;
   role: string;
-  uid: string;
+  password: string;
+};
+
+export type UserResponse = {
+  message: string;
+  data: User;
+  accessToken: string;
 };
 
 export type Request = {
@@ -15,17 +20,9 @@ export type Request = {
   createAt: number;
   department: string;
   email: string;
-  id: string;
   isConfirm: boolean;
   priority: string;
-  requestID: string;
   uid: string;
-  comment?: object;
-};
-
-export type Comment = {
-  author: string;
-  role: string;
-  content: string;
-  createAt: number;
+  __v: number;
+  _id: string;
 };

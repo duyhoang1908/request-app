@@ -1,32 +1,30 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
-import { userSelector } from "../../redux/Slice/UserSlice";
 import { Request } from "../../types";
-import {
-  getRequestsByRole,
-  handleChangeConfirmRequest,
-} from "../../utils/connectFirebase";
 import { converTimeStamp } from "../../utils/func";
+import { confirmRequest, getRequestOfDepartment } from "../../apis/request.api";
+import { useAuthContext } from "../../context/AuthContext";
 
 const ListRequestOfDepartment = () => {
-  const user = useSelector(userSelector);
+  const { user } = useAuthContext();
   const { department } = useParams();
 
   const { data } = useQuery({
     queryKey: [`request${department}`, department],
-    queryFn: () => getRequestsByRole(department as string),
+    queryFn: () => getRequestOfDepartment(department as string),
+    enabled: department !== undefined,
+    onError: (error: any) => toast(error.response.data.message),
   });
 
   return (
     <MainLayout>
       <Title
-        name={`Yêu cầu phòng ${user.department}`}
-        title={`Yêu cầu phòng ${user.department}`}
+        name={`Yêu cầu phòng ${user?.department}`}
+        title={`Yêu cầu phòng ${user?.department}`}
       />
 
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-10">
@@ -73,10 +71,10 @@ const ListRequestOfDepartment = () => {
             </tr>
           </thead>
           <tbody>
-            {data
-              ?.sort((a: Request, b: Request) => b.createAt - a.createAt)
+            {data?.data
+              .sort((a: Request, b: Request) => b.createAt - a.createAt)
               .map((request) => (
-                <TableRow key={request.id} request={request} />
+                <TableRow key={request._id} request={request} />
               ))}
           </tbody>
         </table>
@@ -93,25 +91,21 @@ type Props = {
 
 const TableRow = ({ request }: Props) => {
   const [isConfirm, setIsConfirm] = useState<boolean>(request.isConfirm);
-  const changeConfirm = async (id: string, isConfirm: boolean) => {
-    try {
-      if (!isConfirm) {
-        await handleChangeConfirmRequest(id);
-        toast("Thay đổi thành công!");
-        setIsConfirm(true);
-      } else {
-        toast("Yêu cầu này đã được xác nhận.");
-      }
-    } catch (error) {
-      toast("Đã có lỗi xảy ra!");
-    }
+  const changeConfirm = useMutation({
+    mutationFn: () => confirmRequest(request._id),
+    onSuccess: () => {
+      setIsConfirm(true);
+      toast("Thay đổi thành công");
+    },
+    onError: () => {
+      toast("Thay đổi thất bại");
+    },
+  });
+
+  const handleChangeConfirm = () => {
+    if (!isConfirm) changeConfirm.mutate();
   };
 
-  // const changeConfirm = useMutation({
-  //  mutationFn: (body) => {
-  //   return body
-  //  }
-  // });
   return (
     <tr className="bg-white border-b">
       <th
@@ -132,9 +126,9 @@ const TableRow = ({ request }: Props) => {
       <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
         <div
           className={`px-2 py-1 text-center text-white text-xs rounded-md ${
-            request.priority === "Low"
+            request.priority.toLocaleLowerCase() === "low"
               ? "bg-gray-500"
-              : request.priority === "Medium"
+              : request.priority.toLocaleLowerCase() === "medium"
               ? "bg-blue-600"
               : "bg-red-500"
           }`}
@@ -149,7 +143,7 @@ const TableRow = ({ request }: Props) => {
               ? "bg-blue-600 hover:cursor-not-allowed "
               : "bg-red-500 hover:cursor-pointer"
           }`}
-          onClick={() => changeConfirm(request.id, isConfirm)}
+          onClick={handleChangeConfirm}
         >
           {isConfirm ? "Đã xác nhận" : "Chưa xác nhận"}
         </div>
@@ -158,7 +152,7 @@ const TableRow = ({ request }: Props) => {
         {converTimeStamp(request.createAt)}
       </td>
       <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-        <Link to={`/update/${request.requestID}`}>Sửa</Link>
+        <Link to={`/update/${request._id}`}>Sửa</Link>
       </td>
     </tr>
   );

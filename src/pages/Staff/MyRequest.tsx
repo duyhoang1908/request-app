@@ -1,24 +1,23 @@
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import Title from "../../components/Title";
 import MainLayout from "../../Layout/MainLayout";
-import { userSelector } from "../../redux/Slice/UserSlice";
-import { getMyRequest } from "../../utils/connectFirebase";
 import { converTimeStamp } from "../../utils/func";
-
 import { useQuery } from "@tanstack/react-query";
+import { getListRequestByUserId } from "../../apis/request.api";
 import { Request } from "../../types";
+import { useAuthContext } from "../../context/AuthContext";
 
 const MyRequest = () => {
-  const user = useSelector(userSelector);
+  const { user } = useAuthContext();
+
   const { data } = useQuery({
-    queryKey: ["requests", user.uid],
-    queryFn: (_) => getMyRequest(user.uid),
+    queryKey: [`myrequest`, user?._id],
+    queryFn: (_) => getListRequestByUserId(user?._id as string),
     onError: () => {
       toast("Đã có lỗi xảy ra.");
     },
-    enabled: user.uid !== undefined,
+    enabled: user !== undefined && user?._id !== undefined,
   });
 
   return (
@@ -69,10 +68,10 @@ const MyRequest = () => {
             </tr>
           </thead>
           <tbody>
-            {data
+            {data?.data
               ?.sort((a: Request, b: Request) => b.createAt - a.createAt)
               .map((request) => (
-                <tr key={request.id} className="bg-white border-b">
+                <tr key={request._id} className="bg-white border-b">
                   <th
                     scope="row"
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
@@ -91,9 +90,9 @@ const MyRequest = () => {
                   <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                     <div
                       className={`px-2 py-1 text-center text-white text-xs rounded-md ${
-                        request.priority === "Low"
+                        request.priority.toLocaleLowerCase() === "low"
                           ? "bg-gray-500"
-                          : request.priority === "Medium"
+                          : request.priority.toLocaleLowerCase() === "medium"
                           ? "bg-blue-600"
                           : "bg-red-500"
                       }`}
@@ -108,7 +107,7 @@ const MyRequest = () => {
                     {converTimeStamp(request.createAt)}
                   </td>
                   <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                    <Link to={`/request/${request.requestID}`}>Sửa</Link>
+                    <Link to={`/request/${request._id}`}>Sửa</Link>
                   </td>
                 </tr>
               ))}

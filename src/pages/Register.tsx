@@ -1,53 +1,40 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { auth } from "../firebase/config";
-import { addNewUser } from "../utils/connectFirebase";
-import { newUserData } from "../utils/func";
+
+import { useMutation } from "@tanstack/react-query";
+import { registerNewUser } from "../apis/request.api";
 
 const initRegisterForm = {
   department: "IT",
   email: "",
   password: "",
-  name: "",
+  username: "",
 };
 
 const Register = () => {
   const navigate = useNavigate();
   const [registerForm, setRegisterForm] = useState(initRegisterForm);
 
-  const handleRegister = async () => {
-    try {
-      await createUserWithEmailAndPassword(
-        auth,
-        registerForm.email,
-        registerForm.password
-      );
-      const data = newUserData(
-        registerForm.email,
-        registerForm.name,
-        registerForm.department,
-        auth?.currentUser?.uid as string
-      );
-      await addNewUser(data);
-      toast("Đăng ký thành công");
-      navigate("/login");
-    } catch (error) {
-      console.log(error);
-      toast.warning("Đã có lỗi xảy ra vui lòng thử lại sau.");
-    }
-  };
+  const handleRegister = useMutation({
+    mutationFn: () => registerNewUser(registerForm),
+    onSuccess: (res) => {
+      if (res.data.data) {
+        navigate("/login");
+      }
+      toast(res.data.message);
+    },
+    onError: (error: any) => toast(error.response.data.message),
+  });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    handleRegister();
-    setRegisterForm(initRegisterForm);
+    handleRegister.mutate();
   };
 
   const handleChange =
-    (name: "email" | "password" | "department" | "name") =>
+    (name: "email" | "password" | "department" | "username") =>
     (
       e:
         | React.ChangeEvent<HTMLInputElement>
@@ -107,8 +94,8 @@ const Register = () => {
             className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
             placeholder=" "
             required
-            value={registerForm.name}
-            onChange={handleChange("name")}
+            value={registerForm.username}
+            onChange={handleChange("username")}
           />
           <label
             htmlFor="floating_name"
