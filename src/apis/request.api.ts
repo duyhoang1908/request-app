@@ -15,6 +15,14 @@ export const loginUser = (data: Pick<User, "email" | "password">) =>
     withCredentials: true,
   });
 
+export const updateAvatar = (img: any, id: string) => {
+  const data = { img };
+  return http.post(`/avatar/${id}`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 //Request
 export const addNewRequest = (
   data: Omit<Request, "_id" | "__v" | "createAt">
